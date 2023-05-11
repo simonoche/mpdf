@@ -216,6 +216,14 @@ class ImageProcessor implements \Psr\Log\LoggerAwareInterface
 			return $this->imageError($file, $firsttime, '');
 		}
 
+		$options = [
+			'http' => [
+				'header' => "Cache-Control: no-cache\r\n" .
+							"Pragma: no-cache\r\n"
+			]
+		];
+		$context = stream_context_create($options);
+		
 		if (empty($data)) {
 
 			$data = '';
@@ -224,14 +232,14 @@ class ImageProcessor implements \Psr\Log\LoggerAwareInterface
 				fclose($check);
 				$file = $orig_srcpath;
 				$this->logger->debug(sprintf('Fetching (file_get_contents) content of file "%s" with local basepath', $file), ['context' => LogContext::REMOTE_CONTENT]);
-				$data = file_get_contents($file);
+				$data = file_get_contents($file, 0, $context);
 				$type = $this->guesser->guess($data);
 			}
 
 			if (!$data && $check = @fopen($file, 'rb')) {
 				fclose($check);
 				$this->logger->debug(sprintf('Fetching (file_get_contents) content of file "%s" with non-local basepath', $file), ['context' => LogContext::REMOTE_CONTENT]);
-				$data = file_get_contents($file);
+				$data = file_get_contents($file, 0, $context);
 				$type = $this->guesser->guess($data);
 			}
 
